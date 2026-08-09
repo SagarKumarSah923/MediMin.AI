@@ -1,6 +1,6 @@
-# [Project name]
+# MediMin AI
 
-_Replace the heading above with the project's name, and this line with one sentence describing what this app does for users._
+MediMin AI is a calm, privacy-minded health companion for symptom guidance, guided check-ins, AI conversations, and personal wellness context.
 
 ## Run & Operate
 
@@ -10,6 +10,7 @@ _Replace the heading above with the project's name, and this line with one sente
 - `pnpm --filter @workspace/api-spec run codegen` — regenerate API hooks and Zod schemas from the OpenAPI spec
 - `pnpm --filter @workspace/db run push` — push DB schema changes (dev only)
 - Required env: `DATABASE_URL` — Postgres connection string
+- Required secret for live assistant responses: `OPENAI_API_KEY`
 
 ## Stack
 
@@ -22,23 +23,32 @@ _Replace the heading above with the project's name, and this line with one sente
 
 ## Where things live
 
-_Populate as you build — short repo map plus pointers to the source-of-truth file for DB schema, API contracts, theme files, etc._
+- `artifacts/medimin-ai/src/App.tsx` — complete responsive patient workspace and routes
+- `artifacts/medimin-ai/src/index.css` — MediMin visual tokens, typography, responsive behavior, and motion
+- `artifacts/api-server/src/routes/medimin.ts` — dashboard, assessment, symptom, conversation, and profile API routes
+- `artifacts/api-server/src/lib/medimin-ai.ts` — server-side AI calls and safe health-information fallbacks
+- `lib/api-spec/openapi.yaml` — source-of-truth API contract
+- `lib/db/src/schema/medimin.ts` — PostgreSQL tables and typed Drizzle models
 
 ## Architecture decisions
 
-_Populate as you build — non-obvious choices a reader couldn't infer from the code (3-5 bullets)._
+- API contracts are defined in OpenAPI first, then generated hooks and Zod validators are used by the frontend and server.
+- The first build uses a single seeded patient workspace so the product is immediately understandable; user-scoped auth can be layered onto the same tables.
+- AI calls happen only on the server. If the provider is unavailable, health flows remain usable and return a cautious, non-diagnostic fallback.
+- The product deliberately separates symptom organization and reflection from diagnosis or emergency care.
 
 ## Product
 
-_Describe the high-level user-facing capabilities of this app once they exist._
+The app includes a dashboard snapshot, health assessment history and creation, symptom analysis, AI conversations, a profile context view, and a trust/safety page. The backend persists the profile, assessments, symptom checks, conversations, and messages in PostgreSQL.
 
 ## User preferences
 
-_Populate as you build — explicit user instructions worth remembering across sessions._
+The user prefers a complete frontend-to-backend product structure based on the uploaded MediMin AI brief.
 
 ## Gotchas
 
-_Populate as you build — sharp edges, "always run X before Y" rules._
+- Run `pnpm --filter @workspace/api-spec run codegen` after any OpenAPI change.
+- Keep `OPENAI_API_KEY` server-side; never expose it in frontend code or logs.
 
 ## Pointers
 

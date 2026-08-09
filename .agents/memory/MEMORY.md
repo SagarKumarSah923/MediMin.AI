@@ -1,0 +1,1 @@
+- [OpenAPI and Zod compatibility](openapi-zod-compatibility.md) — keep generated response schemas compatible with the workspace’s pinned Zod version.

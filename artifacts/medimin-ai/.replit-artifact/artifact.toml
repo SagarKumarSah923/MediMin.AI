@@ -1,0 +1,28 @@
+kind = "web"
+previewPath = "/"
+title = "MediMin AI"
+description = "A calm, privacy-minded AI health companion for symptom guidance, health assessments, conversations, and personal wellness insights."
+version = "1.0.0"
+id = "artifacts/medimin-ai"
+router = "path"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 25810
+
+[services.development]
+run = "pnpm --filter @workspace/medimin-ai run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/medimin-ai", "run", "build" ]
+serve = "static"
+publicDir = "artifacts/medimin-ai/dist/public"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "25810"
+BASE_PATH = "/"

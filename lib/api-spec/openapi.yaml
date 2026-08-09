@@ -10,6 +10,16 @@ servers:
 tags:
   - name: health
     description: Health operations
+  - name: dashboard
+    description: Patient dashboard and overview operations
+  - name: assessments
+    description: Health assessment operations
+  - name: symptom-checks
+    description: Symptom analysis operations
+  - name: conversations
+    description: AI assistant conversations
+  - name: profile
+    description: Patient profile operations
 paths:
   /healthz:
     get:
@@ -24,7 +34,174 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+  /dashboard:
+    get:
+      operationId: getDashboard
+      tags: [dashboard]
+      summary: Get dashboard overview
+      responses:
+        "200":
+          description: Dashboard overview
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Dashboard"
+  /assessments:
+    get:
+      operationId: listAssessments
+      tags: [assessments]
+      summary: List health assessments
+      responses:
+        "200":
+          description: Assessment history
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Assessment"
+    post:
+      operationId: createAssessment
+      tags: [assessments]
+      summary: Create a health assessment
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AssessmentInput"
+      responses:
+        "201":
+          description: Created assessment
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Assessment"
+  /assessments/{id}:
+    get:
+      operationId: getAssessment
+      tags: [assessments]
+      summary: Get a health assessment
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      responses:
+        "200":
+          description: Assessment
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Assessment"
+        "404":
+          description: Assessment not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /symptom-checks:
+    post:
+      operationId: createSymptomCheck
+      tags: [symptom-checks]
+      summary: Analyze symptoms
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SymptomCheckInput"
+      responses:
+        "201":
+          description: Symptom analysis result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SymptomCheck"
+  /conversations:
+    get:
+      operationId: listConversations
+      tags: [conversations]
+      summary: List assistant conversations
+      responses:
+        "200":
+          description: Conversations
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Conversation"
+    post:
+      operationId: createConversation
+      tags: [conversations]
+      summary: Start a conversation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ConversationInput"
+      responses:
+        "201":
+          description: Created conversation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Conversation"
+  /conversations/{id}/messages:
+    get:
+      operationId: listMessages
+      tags: [conversations]
+      summary: List messages in a conversation
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      responses:
+        "200":
+          description: Conversation messages
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Message"
+    post:
+      operationId: sendMessage
+      tags: [conversations]
+      summary: Send a message to the assistant
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MessageInput"
+      responses:
+        "201":
+          description: Assistant response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MessagePair"
+  /profile:
+    get:
+      operationId: getProfile
+      tags: [profile]
+      summary: Get the current patient profile
+      responses:
+        "200":
+          description: Patient profile
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Profile"
 components:
+  parameters:
+    Id:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: number
+        minimum: 1
   schemas:
     HealthStatus:
       type: object
@@ -33,4 +210,151 @@ components:
           type: string
       required:
         - status
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+      required: [error]
+    Profile:
+      type: object
+      properties:
+        id: { type: number }
+        firstName: { type: string }
+        lastName: { type: string }
+        email: { type: string }
+        dateOfBirth: { type: string, format: date }
+        bloodType: { type: string }
+        allergies:
+          type: array
+          items: { type: string }
+        conditions:
+          type: array
+          items: { type: string }
+        medicationCount: { type: number }
+      required: [id, firstName, lastName, email, dateOfBirth, bloodType, allergies, conditions, medicationCount]
+    DashboardMetric:
+      type: object
+      properties:
+        label: { type: string }
+        value: { type: string }
+        detail: { type: string }
+        tone: { type: string }
+      required: [label, value, detail, tone]
+    Dashboard:
+      type: object
+      properties:
+        profile:
+          $ref: "#/components/schemas/Profile"
+        metrics:
+          type: array
+          items:
+            $ref: "#/components/schemas/DashboardMetric"
+        latestAssessment:
+          anyOf:
+            - $ref: "#/components/schemas/Assessment"
+            - type: "null"
+        recentActivity:
+          type: array
+          items:
+            $ref: "#/components/schemas/Activity"
+        healthScore: { type: number, minimum: 0, maximum: 100 }
+        healthScoreLabel: { type: string }
+      required: [profile, metrics, latestAssessment, recentActivity, healthScore, healthScoreLabel]
+    Activity:
+      type: object
+      properties:
+        id: { type: number }
+        kind: { type: string }
+        title: { type: string }
+        detail: { type: string }
+        occurredAt: { type: string, format: date-time }
+      required: [id, kind, title, detail, occurredAt]
+    Assessment:
+      type: object
+      properties:
+        id: { type: number }
+        title: { type: string }
+        status: { type: string }
+        summary: { type: string }
+        score: { type: number, minimum: 0, maximum: 100 }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+        answers:
+          type: object
+          additionalProperties:
+            type: string
+      required: [id, title, status, summary, score, createdAt, updatedAt, answers]
+    AssessmentInput:
+      type: object
+      properties:
+        title: { type: string, minLength: 1 }
+        answers:
+          type: object
+          additionalProperties:
+            type: string
+      required: [title, answers]
+    SymptomCheckInput:
+      type: object
+      properties:
+        symptoms:
+          type: array
+          items: { type: string }
+        duration: { type: string }
+        severity: { type: string }
+        notes: { type: string }
+      required: [symptoms, duration, severity]
+    SymptomCheck:
+      type: object
+      properties:
+        id: { type: number }
+        symptoms:
+          type: array
+          items: { type: string }
+        possibleCauses:
+          type: array
+          items: { type: string }
+        guidance:
+          type: array
+          items: { type: string }
+        urgency: { type: string }
+        disclaimer: { type: string }
+        createdAt: { type: string, format: date-time }
+      required: [id, symptoms, possibleCauses, guidance, urgency, disclaimer, createdAt]
+    Conversation:
+      type: object
+      properties:
+        id: { type: number }
+        title: { type: string }
+        preview: { type: string }
+        messageCount: { type: number }
+        updatedAt: { type: string, format: date-time }
+      required: [id, title, preview, messageCount, updatedAt]
+    ConversationInput:
+      type: object
+      properties:
+        title: { type: string, minLength: 1 }
+      required: [title]
+    Message:
+      type: object
+      properties:
+        id: { type: number }
+        conversationId: { type: number }
+        role: { type: string }
+        content: { type: string }
+        createdAt: { type: string, format: date-time }
+      required: [id, conversationId, role, content, createdAt]
+    MessageInput:
+      type: object
+      properties:
+        content: { type: string, minLength: 1 }
+      required: [content]
+    MessagePair:
+      type: object
+      properties:
+        userMessage:
+          $ref: "#/components/schemas/Message"
+        assistantMessage:
+          $ref: "#/components/schemas/Message"
+      required: [userMessage, assistantMessage]
 

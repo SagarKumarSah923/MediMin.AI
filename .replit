@@ -1,12 +1,10 @@
-modules = ["nodejs-24", "postgresql-16", "java-graalvm22.3"]
+modules = ["nodejs-24", "java-graalvm22.3", "python-base-3.13"]
 
 [deployment]
 router = "application"
 deploymentTarget = "autoscale"
 
-[deployment.postBuild]
-args = ["pnpm", "store", "prune"]
-env = { "CI" = "true" }
+deployment.postBuild = { args = ["mvn", "-f", "services/medimin-spring/pom.xml", "clean", "package", "-DskipTests"], env = { "CI" = "true" } }
 
 [workflows]
 runButton = "Project"

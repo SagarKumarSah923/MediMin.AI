@@ -1,0 +1,10 @@
+server:
+  port: ${PORT:18081}
+spring:
+  application:
+    name: medimin-profile-service
+  data:
+    mongodb:
+      uri: ${MONGODB_URI:mongodb://127.0.0.1:27017/medimin}
+      database: ${MONGODB_DATABASE:medimin}
+      auto-index-creation: true

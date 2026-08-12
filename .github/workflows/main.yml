@@ -1,0 +1,84 @@
+name: CI
+
+# Build, test, and report on the Spring Boot services in services/medimin-spring
+on:
+  push:
+    branches: [main]
+    paths:
+      - "services/medimin-spring/**"
+      - ".github/workflows/ci.yml"
+  pull_request:
+    branches: [main]
+    paths:
+      - "services/medimin-spring/**"
+      - ".github/workflows/ci.yml"
+  workflow_dispatch: {}
+
+# Cancel superseded runs on the same branch/PR
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+# Least-privilege default token permissions.
+permissions:
+  contents: read
+  checks: write
+  pull-requests: write
+
+defaults:
+  run:
+    working-directory: services/medimin-spring
+
+jobs:
+  build-and-test:
+    name: Build & test (Java 17)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # pom.xml pins <java.version>17</java.version> / <maven.compiler.release>17</maven.compiler.release>
+      # under services/medimin-spring, so the toolchain here must match.
+      - name: Set up JDK 17 (Temurin)
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+          cache: maven
+
+      - name: Build and run tests
+        run: >
+          mvn --batch-mode --no-transfer-progress
+          -Dstyle.color=always
+          clean verify
+
+      # Always publish results, even if the build/tests failed above.
+      - name: Publish test report
+        uses: mikepenz/action-junit-report@v4
+        if: always()
+        with:
+          report_paths: "services/medimin-spring/**/target/surefire-reports/TEST-*.xml"
+          require_tests: false
+          fail_on_failure: true
+          detailed_summary: true
+          include_passed: false
+
+      - name: Upload surefire reports
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: surefire-reports
+          path: services/medimin-spring/**/target/surefire-reports/**
+          retention-days: 14
+          if-no-files-found: ignore
+
+      - name: Upload build JARs
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: build-jars
+          path: services/medimin-spring/**/target/*.jar
+          retention-days: 7
+          if-no-files-found: ignore
